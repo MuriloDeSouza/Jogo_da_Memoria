@@ -7,9 +7,10 @@ const MemoryGame = () => {
   const [cards, setCards] = useState([]);
   const [flipped, setFlipped] = useState([]);
   const [solved, setSolved] = useState([]);
-  const [disabled, setDisabled] = useState(true); // Começa desabilitado até iniciar o jogo
-  const [gameStarted, setGameStarted] = useState(false); // Controla se o jogo foi iniciado
-  const [showAllCards, setShowAllCards] = useState(false); // Controla a exibição temporária de todas as cartas
+  const [disabled, setDisabled] = useState(true);
+  const [gameStarted, setGameStarted] = useState(false);
+  const [showingCards, setShowingCards] = useState(false);
+  const [gameFinished, setGameFinished] = useState(false);
 
   useEffect(() => {
     prepareGame();
@@ -20,12 +21,10 @@ const MemoryGame = () => {
   };
 
   const prepareGame = () => {
-    // Cria pares de Pokémons
     const pokemonPairs = pokemonIds.reduce((acc, id) => {
       return [...acc, { id: `${id}-1`, pokemonId: id }, { id: `${id}-2`, pokemonId: id }];
     }, []);
     
-    // Embaralha as cartas
     const shuffled = pokemonPairs
       .sort(() => Math.random() - 0.5)
       .map((card, index) => ({ 
@@ -39,29 +38,27 @@ const MemoryGame = () => {
     setSolved([]);
     setDisabled(true);
     setGameStarted(false);
+    setGameFinished(false);
+    setShowingCards(false);
   };
 
   const startGame = () => {
     setGameStarted(true);
-    setShowAllCards(true);
+    setShowingCards(true);
     
     // Mostra todas as cartas por 3 segundos
     const allCardIds = cards.map(card => card.uniqueId);
     setFlipped(allCardIds);
     
     setTimeout(() => {
-      setShowAllCards(false);
+      setShowingCards(false);
       setFlipped([]);
       setDisabled(false); // Habilita o jogo após esconder as cartas
-    }, 3000); // 3 segundos para memorizar
-  };
-
-  const initializeGame = () => {
-    prepareGame();
+    }, 3000);
   };
 
   const handleCardPress = (uniqueId) => {
-    if (disabled || !gameStarted) return;
+    if (disabled || !gameStarted || showingCards) return;
     if (flipped.includes(uniqueId) || solved.includes(uniqueId)) return;
     
     const newFlipped = [...flipped, uniqueId];
@@ -79,7 +76,14 @@ const MemoryGame = () => {
     const secondCard = cards.find(card => card.uniqueId === secondId);
     
     if (firstCard.pokemonId === secondCard.pokemonId) {
-      setSolved([...solved, firstId, secondId]);
+      const newSolved = [...solved, firstId, secondId];
+      setSolved(newSolved);
+      
+      // Verifica se o jogo terminou
+      if (newSolved.length === cards.length) {
+        setGameFinished(true);
+      }
+      
       resetTurn();
     } else {
       setTimeout(resetTurn, 1000);
@@ -89,12 +93,6 @@ const MemoryGame = () => {
   const resetTurn = () => {
     setFlipped([]);
     setDisabled(false);
-    
-    if (solved.length + 2 === cards.length && cards.length > 0) {
-      Alert.alert('Parabéns!', 'Você encontrou todos os Pokémons!', [
-        { text: 'Jogar Novamente', onPress: initializeGame }
-      ]);
-    }
   };
 
   return (
@@ -107,14 +105,14 @@ const MemoryGame = () => {
             key={card.uniqueId}
             style={[
               styles.card,
-              (flipped.includes(card.uniqueId) || solved.includes(card.uniqueId) || showAllCards
+              (flipped.includes(card.uniqueId) || solved.includes(card.uniqueId) || showingCards
                 ? styles.cardFlipped 
                 : styles.cardBack
-              )]}
+                )]}
             onPress={() => handleCardPress(card.uniqueId)}
             disabled={solved.includes(card.uniqueId) || !gameStarted}
           >
-            {(flipped.includes(card.uniqueId) || solved.includes(card.uniqueId) || showAllCards ? (
+            {(flipped.includes(card.uniqueId) || solved.includes(card.uniqueId) || showingCards) ? (
               <Image
                 source={{ uri: getPokemonImageUrl(card.pokemonId) }}
                 style={styles.pokemonImage}
@@ -122,20 +120,41 @@ const MemoryGame = () => {
               />
             ) : (
               <Text style={styles.cardText}>?</Text>
-             ))}
+            )}
           </TouchableOpacity>
         ))}
       </View>
       
       {!gameStarted && (
         <TouchableOpacity style={[styles.button, styles.startButton]} onPress={startGame}>
-          <Text style={styles.buttonText}>Iniciar Jogo</Text>
+          <Text style={styles.buttonText}>Jogar</Text>
         </TouchableOpacity>
       )}
+
+        {gameStarted && (
+        <TouchableOpacity 
+            style={styles.button} 
+            onPress={prepareGame}
+            disabled={showingCards} // Desabilita o botão durante a exibição das cartas
+        >
+            <Text style={[
+            styles.buttonText,
+            showingCards && { opacity: 0.5 } // Opcional: deixa o texto mais claro quando desabilitado
+            ]}>Reiniciar Jogo</Text>
+        </TouchableOpacity>
+        )}
+
+     {/* {gameStarted && (
+        <TouchableOpacity style={styles.button} onPress={prepareGame}>
+            <Text style={styles.buttonText}>Reiniciar Jogo</Text>
+        </TouchableOpacity>
+     )} */}
       
-      <TouchableOpacity style={styles.button} onPress={initializeGame}>
-        <Text style={styles.buttonText}>Reiniciar Jogo</Text>
-      </TouchableOpacity>
+      {/* {gameFinished && (
+        <TouchableOpacity style={styles.button} onPress={prepareGame}>
+          <Text style={styles.buttonText}>Reiniciar Jogo</Text>
+        </TouchableOpacity>
+      )} */}
     </View>
   );
 };
@@ -195,8 +214,11 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     marginTop: 10,
   },
+  buttonDisabled: { // Adicione este novo estilo
+    backgroundColor: '#cccccc',
+  },
   startButton: {
-    backgroundColor: '#4CAF50', // Cor diferente para o botão de iniciar
+    backgroundColor: '#4CAF50',
   },
   buttonText: {
     color: '#ffcb05',
