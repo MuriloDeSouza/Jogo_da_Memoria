@@ -10,6 +10,7 @@ const MemoryGame = () => {
   const [disabled, setDisabled] = useState(true);
   const [gameStarted, setGameStarted] = useState(false);
   const [showingCards, setShowingCards] = useState(false);
+  const [score, setScore] = useState(0); // Estado para armazenar a pontuação
 
   useEffect(() => {
     prepareGame();
@@ -38,6 +39,7 @@ const MemoryGame = () => {
     setDisabled(true);
     setGameStarted(false);
     setShowingCards(false);
+    setScore(0); // Reseta a pontuação ao preparar novo jogo
   };
 
   const startGame = () => {
@@ -74,6 +76,8 @@ const MemoryGame = () => {
     const secondCard = cards.find(card => card.uniqueId === secondId);
     
     if (firstCard.pokemonId === secondCard.pokemonId) {
+      // Acertou o par: ganha 20 pontos
+      setScore(prevScore => prevScore + 20);
       const newSolved = [...solved, firstId, secondId];
       setSolved(newSolved);
       
@@ -81,7 +85,7 @@ const MemoryGame = () => {
       if (newSolved.length === cards.length && cards.length > 0) {
         Alert.alert(
           'Parabéns!', 
-          'Você conseguiu achar todos os pares!',
+          `Você conseguiu achar todos os pares! Pontuação final: ${score + 20}`,
           [
             {
               text: 'OK',
@@ -96,6 +100,8 @@ const MemoryGame = () => {
       
       resetTurn();
     } else {
+      // Errou o par: perde 5 pontos (mas não fica negativo)
+      setScore(prevScore => Math.max(0, prevScore - 5));
       setTimeout(resetTurn, 1000);
     }
   };
@@ -108,9 +114,13 @@ const MemoryGame = () => {
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Pokémon Memory Game</Text>
+
+        {/* Exibe a pontuação atual */}
+        <Text style={styles.score}>Pontuação: {score}</Text>
       
       <View style={styles.board}>
         {cards.map((card) => (
+            
           <TouchableOpacity
             key={card.uniqueId}
             style={[
@@ -158,70 +168,76 @@ const MemoryGame = () => {
 };
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: 20,
-    backgroundColor: '#f5f5f5',
-  },
-  title: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    marginBottom: 20,
-    color: '#ffcb05',
-    textShadowColor: '#3c5aa6',
-    textShadowOffset: { width: 1, height: 1 },
-    textShadowRadius: 2,
-  },
-  board: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'center',
-    marginBottom: 20,
-  },
-  card: {
-    width: 80,
-    height: 80,
-    margin: 5,
-    borderRadius: 10,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: '#fff',
-    borderWidth: 2,
-    borderColor: '#3c5aa6',
-  },
-  cardBack: {
-    backgroundColor: '#3c5aa6',
-  },
-  cardFlipped: {
-    backgroundColor: '#fff',
-  },
-  cardText: {
-    fontSize: 24,
-    color: '#3c5aa6',
-    fontWeight: 'bold',
-  },
-  pokemonImage: {
-    width: 70,
-    height: 70,
-  },
-  button: {
-    backgroundColor: '#3c5aa6',
-    padding: 15,
-    borderRadius: 8,
-    marginTop: 10,
-  },
-  buttonDisabled: {
-    backgroundColor: '#cccccc',
-  },
-  startButton: {
-    backgroundColor: '#4CAF50',
-  },
-  buttonText: {
-    color: '#ffcb05',
-    fontWeight: 'bold',
-  },
-});
-
-export default MemoryGame;
+    container: {
+      flex: 1,
+      alignItems: 'center',
+      justifyContent: 'center',
+      padding: 20,
+      backgroundColor: '#f5f5f5',
+    },
+    title: {
+      fontSize: 24,
+      fontWeight: 'bold',
+      marginBottom: 20,
+      color: '#ffcb05',
+      textShadowColor: '#3c5aa6',
+      textShadowOffset: { width: 1, height: 1 },
+      textShadowRadius: 2,
+    },
+    score: {
+      fontSize: 18,
+      fontWeight: 'bold',
+      marginBottom: 10,
+      color: '#3c5aa6',
+    },
+    board: {
+      flexDirection: 'row',
+      flexWrap: 'wrap',
+      justifyContent: 'center',
+      marginBottom: 20,
+    },
+    card: {
+      width: 80,
+      height: 80,
+      margin: 5,
+      borderRadius: 10,
+      alignItems: 'center',
+      justifyContent: 'center',
+      backgroundColor: '#fff',
+      borderWidth: 2,
+      borderColor: '#3c5aa6',
+    },
+    cardBack: {
+      backgroundColor: '#3c5aa6',
+    },
+    cardFlipped: {
+      backgroundColor: '#fff',
+    },
+    cardText: {
+      fontSize: 24,
+      color: '#3c5aa6',
+      fontWeight: 'bold',
+    },
+    pokemonImage: {
+      width: 70,
+      height: 70,
+    },
+    button: {
+      backgroundColor: '#3c5aa6',
+      padding: 15,
+      borderRadius: 8,
+      marginTop: 10,
+    },
+    buttonDisabled: {
+      backgroundColor: '#cccccc',
+    },
+    startButton: {
+      backgroundColor: '#4CAF50',
+    },
+    buttonText: {
+      color: '#ffcb05',
+      fontWeight: 'bold',
+    },
+  });
+  
+  export default MemoryGame;
