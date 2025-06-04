@@ -10,7 +10,6 @@ const MemoryGame = () => {
   const [disabled, setDisabled] = useState(true);
   const [gameStarted, setGameStarted] = useState(false);
   const [showingCards, setShowingCards] = useState(false);
-  const [gameFinished, setGameFinished] = useState(false);
 
   useEffect(() => {
     prepareGame();
@@ -38,7 +37,6 @@ const MemoryGame = () => {
     setSolved([]);
     setDisabled(true);
     setGameStarted(false);
-    setGameFinished(false);
     setShowingCards(false);
   };
 
@@ -80,8 +78,20 @@ const MemoryGame = () => {
       setSolved(newSolved);
       
       // Verifica se o jogo terminou
-      if (newSolved.length === cards.length) {
-        setGameFinished(true);
+      if (newSolved.length === cards.length && cards.length > 0) {
+        Alert.alert(
+          'Parabéns!', 
+          'Você conseguiu achar todos os pares!',
+          [
+            {
+              text: 'OK',
+              onPress: () => {
+                prepareGame(); // Volta para a tela inicial
+                setGameStarted(false); // Mostra o botão "Jogar" novamente
+              }
+            }
+          ]
+        );
       }
       
       resetTurn();
@@ -108,7 +118,7 @@ const MemoryGame = () => {
               (flipped.includes(card.uniqueId) || solved.includes(card.uniqueId) || showingCards
                 ? styles.cardFlipped 
                 : styles.cardBack
-                )]}
+              )]}
             onPress={() => handleCardPress(card.uniqueId)}
             disabled={solved.includes(card.uniqueId) || !gameStarted}
           >
@@ -131,30 +141,18 @@ const MemoryGame = () => {
         </TouchableOpacity>
       )}
 
-        {gameStarted && (
+      {gameStarted && (
         <TouchableOpacity 
-            style={styles.button} 
-            onPress={prepareGame}
-            disabled={showingCards} // Desabilita o botão durante a exibição das cartas
+          style={styles.button} 
+          onPress={prepareGame}
+          disabled={showingCards}
         >
-            <Text style={[
+          <Text style={[
             styles.buttonText,
-            showingCards && { opacity: 0.5 } // Opcional: deixa o texto mais claro quando desabilitado
-            ]}>Reiniciar Jogo</Text>
+            showingCards && { opacity: 0.5 }
+          ]}>Reiniciar Jogo</Text>
         </TouchableOpacity>
-        )}
-
-     {/* {gameStarted && (
-        <TouchableOpacity style={styles.button} onPress={prepareGame}>
-            <Text style={styles.buttonText}>Reiniciar Jogo</Text>
-        </TouchableOpacity>
-     )} */}
-      
-      {/* {gameFinished && (
-        <TouchableOpacity style={styles.button} onPress={prepareGame}>
-          <Text style={styles.buttonText}>Reiniciar Jogo</Text>
-        </TouchableOpacity>
-      )} */}
+      )}
     </View>
   );
 };
@@ -214,7 +212,7 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     marginTop: 10,
   },
-  buttonDisabled: { // Adicione este novo estilo
+  buttonDisabled: {
     backgroundColor: '#cccccc',
   },
   startButton: {
