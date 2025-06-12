@@ -1,3 +1,9 @@
+//cache das imagens dos pokemons 
+//guardar jogador e pontuação
+// leader board para ver quem é o melhor jogador
+// guardar o tempo de jogo
+//colocar 3 telas (tela inicial, jogo em si e tela de vitória com o leader_board)
+
 import React, { useState, useEffect } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Alert, Image } from 'react-native';
 
@@ -13,18 +19,21 @@ const MemoryGame = () => {
   const [score, setScore] = useState(0); // Estado para armazenar a pontuação
 
   useEffect(() => {
-    prepareGame();
+    prepareGame(); //essa aqui é o meu Backend dentro do Frontend
   }, []);
 
+  // pegando as imagens dos pokémons para o jogo, batendo na API do PokeAPI
   const getPokemonImageUrl = (id) => {
     return `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/${id}.png`;
   };
 
+  // Prepara o jogo criando pares de cartas e embaralhando
   const prepareGame = () => {
     const pokemonPairs = pokemonIds.reduce((acc, id) => {
       return [...acc, { id: `${id}-1`, pokemonId: id }, { id: `${id}-2`, pokemonId: id }];
     }, []);
     
+    // SHUFFLED é a parte de embaralhar as cartas de forma randomica
     const shuffled = pokemonPairs
       .sort(() => Math.random() - 0.5)
       .map((card, index) => ({ 
@@ -42,6 +51,7 @@ const MemoryGame = () => {
     setScore(0); // Reseta a pontuação ao preparar novo jogo
   };
 
+  // Inicia o jogo mostrando todas as cartas por 3 segundos
   const startGame = () => {
     setGameStarted(true);
     setShowingCards(true);
@@ -50,6 +60,7 @@ const MemoryGame = () => {
     const allCardIds = cards.map(card => card.uniqueId);
     setFlipped(allCardIds);
     
+    // Aqui é onde eu desabilito ele reiniciar o jogo enquanto as cartas estão sendo mostradas
     setTimeout(() => {
       setShowingCards(false);
       setFlipped([]);
@@ -57,24 +68,33 @@ const MemoryGame = () => {
     }, 3000);
   };
 
+  // Função chamada quando uma carta é pressionada
   const handleCardPress = (uniqueId) => {
     if (disabled || !gameStarted || showingCards) return;
     if (flipped.includes(uniqueId) || solved.includes(uniqueId)) return;
     
+    // Adiciona a carta pressionada ao estado de cartas viradas
     const newFlipped = [...flipped, uniqueId];
     setFlipped(newFlipped);
     
+    // Verifica se duas cartas foram viradas
     if (newFlipped.length === 2) {
       setDisabled(true);
       checkForMatch(newFlipped);
     }
   };
 
+  // Verifica se as duas cartas viradas formam um par
+  // Se sim, adiciona aos pares resolvidos e atualiza a pontuação
+  // Se não, reseta as cartas viradas após um tempo
   const checkForMatch = (flippedCards) => {
     const [firstId, secondId] = flippedCards;
     const firstCard = cards.find(card => card.uniqueId === firstId);
     const secondCard = cards.find(card => card.uniqueId === secondId);
     
+    //Sistema lindo de pontuação
+    // Se as cartas forem iguais, adiciona 20 pontos
+    // Se não forem iguais, perde 5 pontos (mas não pode ficar negativo)
     if (firstCard.pokemonId === secondCard.pokemonId) {
       // Acertou o par: ganha 20 pontos
       setScore(prevScore => prevScore + 20);
@@ -82,6 +102,9 @@ const MemoryGame = () => {
       setSolved(newSolved);
       
       // Verifica se o jogo terminou
+      // Se todas as cartas foram resolvidas, exibe mensagem de vitória
+      // Ele completando o jogo ele ganha mais 20 pontos
+      // E reinicia o jogo
       if (newSolved.length === cards.length && cards.length > 0) {
         Alert.alert(
           'Parabéns!', 
@@ -98,6 +121,7 @@ const MemoryGame = () => {
         );
       }
       
+      // lógica de perder os pontos caso não acerte o par
       resetTurn();
     } else {
       // Errou o par: perde 5 pontos (mas não fica negativo)
@@ -111,6 +135,7 @@ const MemoryGame = () => {
     setDisabled(false);
   };
 
+  // Renderiza o jogo e vai meio que setando os estilos e as ações dos botões
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Pokémon Memory Game</Text>
@@ -167,6 +192,7 @@ const MemoryGame = () => {
   );
 };
 
+// Estilos do componente Jogo da Memória
 const styles = StyleSheet.create({
     container: {
       flex: 1,
