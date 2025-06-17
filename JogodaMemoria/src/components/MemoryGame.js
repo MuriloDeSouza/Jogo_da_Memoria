@@ -97,33 +97,6 @@ const VictoryScreen = ({ score, playerName, time, onRestart, onViewRanking }) =>
   );
 };
 
-// Tela de ranking
-// const RankingScreen = ({ ranking, onBack }) => {
-//   return (
-//     <View style={styles.rankingContainer}>
-//       <Text style={styles.rankingTitle}>Top Jogadores</Text>
-      
-//       <View style={styles.rankingList}>
-//         {ranking.map((item, index) => (
-//           <View key={index} style={styles.rankingItem}>
-//             <Text style={styles.rankingPosition}>{index + 1}.</Text>
-//             <Text style={styles.rankingName}>{item.name}</Text>
-//             <Text style={styles.rankingScore}>{item.score} pts</Text>
-//             <Text style={styles.rankingTime}>{item.time}s</Text>
-//           </View>
-//         ))}
-//       </View>
-      
-//       <TouchableOpacity 
-//         style={styles.backButton}
-//         onPress={onBack}
-//       >
-//         <Text style={styles.buttonText}>Voltar</Text>
-//       </TouchableOpacity>
-//     </View>
-//   );
-// };
-
 // Componente principal do jogo
 const MemoryGame = () => {
   // Estados do jogo
@@ -170,18 +143,6 @@ const MemoryGame = () => {
     const ranking = await loadPokemonRanking();
     setRanking(ranking);
   };
-
-  // // Carrega o ranking do AsyncStorage
-  // const loadRanking = async () => {
-  //   try {
-  //     const savedRanking = await AsyncStorage.getItem('pokemonMemoryRanking');
-  //     if (savedRanking) {
-  //       setRanking(JSON.parse(savedRanking));
-  //     }
-  //   } catch (error) {
-  //     console.error('Erro ao carregar ranking:', error);
-  //   }
-  // };
 
   // Salva a pontuação no ranking
   const saveScore = async (finalScore) => {
