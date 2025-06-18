@@ -4,6 +4,7 @@ import { View, Text, TouchableOpacity, StyleSheet, Alert, Image, TextInput, Acti
 import AsyncStorage from '@react-native-async-storage/async-storage';
 // No topo do MemoryGame.js, adicione:
 import RankingScreen from '../telas/rank'; // Importa a tela de ranking
+const API_URL = "http://10.128.1.194:8000"; // Ou seu endereço de backend
 
 // Tela inicial
 export const loadPokemonRanking = async () => {
@@ -138,33 +139,69 @@ const MemoryGame = () => {
     return () => clearInterval(interval);
   }, [screen, loading, showingCards]);
 
-    // Substitua a função loadRanking existente por:
+  // Substitua a função loadRanking existente por:
   const loadRanking = async () => {
-    const ranking = await loadPokemonRanking();
-    setRanking(ranking);
+    try {
+      // Tenta carregar do backend primeiro
+      const response = await fetch(`${API_URL}/ranking/`);
+      if (response.ok) {
+        const backendRanking = await response.json();
+        setRanking(backendRanking);
+        return;
+      }
+      
+      // Fallback para AsyncStorage se o backend falhar
+      const savedRanking = await AsyncStorage.getItem('pokemonMemoryRanking');
+      const localRanking = savedRanking ? JSON.parse(savedRanking) : [];
+      setRanking(localRanking);
+    } catch (error) {
+      console.error('Erro ao carregar ranking:', error);
+      const savedRanking = await AsyncStorage.getItem('pokemonMemoryRanking');
+      const localRanking = savedRanking ? JSON.parse(savedRanking) : [];
+      setRanking(localRanking);
+    }
   };
 
-  // Salva a pontuação no ranking
   const saveScore = async (finalScore) => {
     if (!playerName) return;
     
-    const newScore = {
-      name: playerName,
-      score: finalScore,
-      time: time,
-      date: new Date().toISOString(),
-      element: element
-    };
-    
-    const newRanking = [...ranking, newScore]
-      .sort((a, b) => b.score - a.score || a.time - b.time)
-      .slice(0, 10); // Mantém apenas os top 10
-    
     try {
+      const response = await fetch(`${API_URL}/save-score/`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          player_name: playerName,
+          score: finalScore,
+          time: time,
+          element: element
+        }),
+      });
+  
+      if (!response.ok) {
+        throw new Error('Falha ao salvar pontuação');
+      }
+  
+      // Atualiza o ranking local após salvar
+      loadRanking();
+    } catch (error) {
+      console.error('Erro ao salvar pontuação:', error);
+      // Fallback para AsyncStorage se o backend falhar
+      const newScore = {
+        name: playerName,
+        score: finalScore,
+        time: time,
+        date: new Date().toISOString(),
+        element: element
+      };
+      
+      const newRanking = [...ranking, newScore]
+        .sort((a, b) => b.score - a.score || a.time - b.time)
+        .slice(0, 10);
+      
       await AsyncStorage.setItem('pokemonMemoryRanking', JSON.stringify(newRanking));
       setRanking(newRanking);
-    } catch (error) {
-      console.error('Erro ao salvar ranking:', error);
     }
   };
 
